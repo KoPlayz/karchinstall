@@ -1,28 +1,42 @@
 #!/bin/bash
 echo "Script by Github/KoPlayz for UEFI systems (v1.1-2024-04-12)."
-echo "You will need a partition for EFI (1GB Recommended), Root (majority), swap (RAM *2 recommended)"
+echo "What is the path of your HD/USB to install?"
+sudo fdisk -l
+echo "------------------------------------------------"
+read -p "HD/USB install (eg, /dev/vda): /dev/" hdloc
+echo "------------------------------------------------"
 echo " "
-read -p "Confirm you have made these partitions, then type in the name of the partitions: (/dev/...)"
+clear
+echo "The size of the specified drive is: $(lsblk -b -n -o SIZE /dev/$hdloc | awk '{printf "%.2f", $1/1024/1024/1024}') GB"
+echo -e "\e[1;31mTHIS DRIVE WILL BE ERASED\e[0m"
+read -p "OK? (y/n) " answer
+if [[ $answer == "yes" || $answer == "y" ]]; then
+    # Continue with the rest of your script here
+    echo "Continuing with drive erase..."
+else
+    echo "Exiting..."
+    exit 1
+fi
+hdloc=/dev/$hdloc
 
-#efipart=userinput
-read -p "EFI Partition: /dev/" efipart
-efipart="/dev/$efipart"
-echo "EFI (/boot) Partition is set to: $efipart"
-echo "------------------------------------------------"
+# Setting disk to GPT
+parted --script $hdloc mklabel gpt
 
-#rootpart=userinput
-read -p "Root Partition: /dev/" rootpart
-rootpart="/dev/$rootpart"
-echo "Root (/) Partition is set to: $rootpart"
-echo "------------------------------------------------"
+# Create a 1GB partition
+parted --script $hdloc mkpart primary 1MiB 1GiB
 
-#swappart=userinput
-read -p "Swap Partition: /dev/" swappart
-swappart="/dev/$swappart"
-echo "SWAP Partition is set to: $swappart"
-echo "------------------------------------------------"
+# Create an 8GB partition
+parted --script $hdloc mkpart primary 1GiB 9GiB
 
-# format ext4
+# Create a partition using the rest of the space
+parted --script $disk mkpart primary 9GiB 100%
+
+# Set disk variables
+efipart=$hdloc"1"
+swappart=$hdloc"2"
+rootpart=$hdloc"3"
+
+# Format partitions
 mkfs.fat -F 32 $efipart
 mkfs.ext4 $rootpart
 mkswap $swappart
@@ -50,22 +64,37 @@ echo "------------------------------------------------"
 # Pacstrap installing packages to /mnt
 cpubrand2="$cpubrand"
 echo "Here, we install:"
-pacstrap -K $mntlocation base linux linux-firmware reflector nano grub $cpubrand2-ucode vim man-db man-pages texinfo networkmanager
+pacstrap -K $mntlocation base linux efibootmgr linux-firmware reflector nano grub $cpubrand2-ucode vim man-db man-pages texinfo networkmanager
 
 genfstab -U $mntlocation >> $mntlocation/etc/fstab
 echo "------------------------------------------------"
-# Final touches
+# Setting hostname
 read -p "What would you like to set your hostname to? " hostname
 echo "$hostname" > "$mntlocation/etc/hostname"
-arch-chroot $mntlocation /bin/bash <<EOF
-# Create a new user and set password/root password
+echo "------------------------------------------------"
+
 read -p "What should the username be? " username
 read -p "What should the password be? " password
 read -p "What should the root (superuser) password be? " rootpassword
-useradd -m "$username"
-echo "$username:$password" | chpasswd
-echo "root:$rootpassword" | chpasswd
 
+
+# Making user account and changing files
+info_file="$mntlocation/home/root/user_info"
+echo "username=$username" > $info_file
+echo "password=$password" >> $info_file
+echo "rootpassword=$rootpassword" >> $info_file
+username=0
+password=0
+rootpassword=0
+# chrooting in for final things
+arch-chroot $mntlocation /bin/bash <<EOF
+source /home/root/user_info
+# Add user & set passwd
+useradd -m "$username"
+echo "$username:$password" | chpassword
+echo "root:$rootpassword" | chpassword
+shred /home/root/user_info
+rm /home/root/user_info
 # Update mirrors
 echo Updating mirrors...
 reflector --verbose --latest 5 --age 2 --fastest 5 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
