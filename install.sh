@@ -1,4 +1,8 @@
 #!/bin/bash
+sudo pacman -Sy
+pacman-key --init
+pacman-key --populate
+clear
 echo "Script by Github/KoPlayz for UEFI systems (v1.1-2024-04-12)."
 echo "What is the path of your HD/USB to install?"
 sudo fdisk -l
@@ -64,7 +68,7 @@ echo "------------------------------------------------"
 # Pacstrap installing packages to /mnt
 cpubrand2="$cpubrand"
 echo "Here, we install:"
-pacstrap -K $mntlocation base linux efibootmgr linux-firmware reflector nano grub $cpubrand2-ucode vim man-db man-pages texinfo networkmanager
+pacstrap -K $mntlocation base linux efibootmgr linux-firmware reflector nano grub $cpubrand2-ucode vim man-db man-pages texinfo networkmanager wget $extrapackages
 
 genfstab -U $mntlocation >> $mntlocation/etc/fstab
 echo "------------------------------------------------"
@@ -90,6 +94,7 @@ while IFS=: read -r username password rootpassword; do
 done < /root/user_info
 shred /root/user_info
 rm /root/user_info
+pacman-key --init
 # Update mirrors
 echo Updating mirrors...
 reflector --verbose --latest 5 --age 2 --fastest 5 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
@@ -98,10 +103,12 @@ reflector --verbose --latest 5 --age 2 --fastest 5 --protocol https --sort rate 
 echo Installing GRUB for x86_64 UEFI...
 grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
 EOF
-username=0
 password=0
 rootpassword=0
+cd $mntlocation/home/$username/
+wget 'https://raw.githubusercontent.com/KoPlayz/karchinstall/main/afterinstall_base.sh'
 
+echo "sh ~/afterinstall_base.sh" >> .bashrc
 read -p "Finished. Would you like to restart? (y/N) " restart
 if [[ $restart == "y" || $restart == "Y" ]]; then
     reboot
