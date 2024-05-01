@@ -80,19 +80,14 @@ read -p "What should the root (superuser) password be? " rootpassword
 
 # Making user account and changing files
 info_file="$mntlocation/root/user_info"
-echo "username=$username" > $info_file
-echo "password=$password" >> $info_file
-echo "rootpassword=$rootpassword" >> $info_file
-username=0
-password=0
-rootpassword=0
+echo $username$password$rootpassword > $info_file
 # chrooting in for final things
 arch-chroot $mntlocation /bin/bash <<EOF
-source /root/user_info
-# Add user & set passwd
-useradd -m "$username"
-echo "$username:$password" | chpassword
-echo "root:$rootpassword" | chpassword
+while IFS=: read -r username password rootpassword; do
+    useradd -m "$username"
+    echo "$username:$password" | chpasswd
+    echo "root:$rootpassword" | chpasswd
+done < /root/user_info
 shred /root/user_info
 rm /root/user_info
 # Update mirrors
@@ -103,6 +98,9 @@ reflector --verbose --latest 5 --age 2 --fastest 5 --protocol https --sort rate 
 echo Installing GRUB for x86_64 UEFI...
 grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
 EOF
+username=0
+password=0
+rootpassword=0
 
 read -p "Finished. Would you like to restart? (y/N) " restart
 if [[ $restart == "y" || $restart == "Y" ]]; then
