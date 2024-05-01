@@ -29,7 +29,7 @@ parted --script $hdloc mkpart primary 1MiB 1GiB
 parted --script $hdloc mkpart primary 1GiB 9GiB
 
 # Create a partition using the rest of the space
-parted --script $disk mkpart primary 9GiB 100%
+parted --script $hdloc mkpart primary 9GiB 100%
 
 # Set disk variables
 efipart=$hdloc"1"
