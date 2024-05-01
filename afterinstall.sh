@@ -1,5 +1,5 @@
 #!/bin/bash
-echo Running KArchInstall afterinstall (v1-2024-04-11)
+echo "Running KArchInstall afterinstall (v1-2024-04-11)"
 echo Updating mirrors
 read -p "Enter your country code (e.g., US, GB): " country
 reflector --verbose --latest 5 --age 2 --fastest 5 --protocol https --sort rate --country "$country" --save /etc/pacman.d/mirrorlist

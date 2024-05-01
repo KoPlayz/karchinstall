@@ -1,5 +1,5 @@
 #!/bin/bash
-echo Script by Github/KoPlayz for UEFI systems (v1-2024-04-11).
+echo Script by Github/KoPlayz for UEFI systems (v1.1-2024-04-12).
 echo "You will need a partition for EFI (1GB Recommended), Root (majority), swap (RAM *2 recommended)"
 echo " "
 read -p "Confirm you have made these partitions, then type in the name of the partitions: (/dev/...)"
@@ -44,8 +44,8 @@ else
 fi
 # Pacstrap installing packages to /mnt
 cpubrand2="$cpubrand"
-echo Here, we install 
-pacstrap -K $mntlocation base linux linux-firmware reflector nano grub $cpubrand2 vim man-db man-pages texinfo networkmanager 
+echo Here, we install
+pacstrap -K $mntlocation base linux linux-firmware reflector nano grub $cpubrand2-ucode vim man-db man-pages texinfo networkmanager
 
 genfstab -U $karchinstall >> $karchinstall/etc/fstab
 
