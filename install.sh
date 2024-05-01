@@ -43,7 +43,7 @@ mkswap $swappart
 
 # Mount partitions
 mntlocation=/mnt/karchinstall
-mount $rootpart $mntlocation
+mount --mkdir $rootpart $mntlocation
 mount --mkdir $efipart "$mntlocation/boot"
 swapon $swappart
 echo "------------------------------------------------"
