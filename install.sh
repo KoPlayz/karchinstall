@@ -79,7 +79,7 @@ read -p "What should the root (superuser) password be? " rootpassword
 
 
 # Making user account and changing files
-info_file="$mntlocation/home/root/user_info"
+info_file="$mntlocation/root/user_info"
 echo "username=$username" > $info_file
 echo "password=$password" >> $info_file
 echo "rootpassword=$rootpassword" >> $info_file
@@ -88,13 +88,13 @@ password=0
 rootpassword=0
 # chrooting in for final things
 arch-chroot $mntlocation /bin/bash <<EOF
-source /home/root/user_info
+source /root/user_info
 # Add user & set passwd
 useradd -m "$username"
 echo "$username:$password" | chpassword
 echo "root:$rootpassword" | chpassword
-shred /home/root/user_info
-rm /home/root/user_info
+shred /root/user_info
+rm /root/user_info
 # Update mirrors
 echo Updating mirrors...
 reflector --verbose --latest 5 --age 2 --fastest 5 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
