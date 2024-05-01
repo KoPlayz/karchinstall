@@ -101,7 +101,7 @@ reflector --verbose --latest 5 --age 2 --fastest 5 --protocol https --sort rate 
 
 # Install GRUB for x86_64 UEFI
 echo Installing GRUB for x86_64 UEFI...
-grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
+grub-install --efi-directory=/boot
 EOF
 password=0
 rootpassword=0
